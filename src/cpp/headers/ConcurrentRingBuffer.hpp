@@ -44,8 +44,10 @@ public:
 	}
 
 	// removes the next item from the buffer, returns NULL on failure
-	// responsibility for releasing the pointer is passed to the caller
-	// of remove/1
+	// responsibility for releasing the pointer is NOT passed to the caller.
+	// CRB will eventually clear the pointer, either when the buffer is
+	// destroyed, or `size` items have been inserted, causing an overwrite
+	// to the location in memory.
 	T* remove(){
 		if( start == end ){
 			return NULL;
