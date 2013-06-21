@@ -7,6 +7,10 @@ AudioEngine::AudioEngine( void* audioSettings ){
 }
 
 bool AudioEngine::passData( dyn_array<float>* content ){
+
+	if( content == NULL || content->size == 0 ){
+		return false;
+	}
 	
 	//copy the array.
 	dyn_array<float>* newContent = dyn_array<float>::create(content->size);
