@@ -2,6 +2,15 @@
 
 #include "AudioEngine.hpp"
 
+static void copy(float* src, float* dst, size_t length){
+	while( length > 0 ){
+		*src = *dst;
+		src++;
+		dst++;
+		length--;
+	}
+}
+
 AudioEngine::AudioEngine( void* audioSettings ){
 	// uhhh...TODO, dunno how to handle audio settings yet.
 }
@@ -18,7 +27,7 @@ bool AudioEngine::passData( dyn_array<float>* content ){
 	float* clone = newContent->data;
 	float* real = content->data;
 	//do the copy.
-	//std::copy<float,float>(&clone, clone + content->size, &real);
+	copy(real, clone, content->size);
 
 	//don't be stupid now...
 	clone = real = NULL;
