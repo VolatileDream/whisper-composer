@@ -17,6 +17,7 @@ class ConcurrentRingBuffer {
 public:
 	ConcurrentRingBuffer(): start(0), end(0) {
 		buffer = new std::array<T*,size>;
+		buffer->fill(NULL);// make sure it's empty...
 	}
 
 	// adds an item to the buffer, returns true on success
