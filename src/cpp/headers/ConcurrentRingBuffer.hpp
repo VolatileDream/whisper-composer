@@ -32,6 +32,13 @@ public:
 			return false;
 		}
 
+		// this is a hack to avoid deallocation in the port
+		// audio callback (possibly an os interrupt)
+		T* item = buffer->at(end);
+		if( item != NULL ){
+			delete item;
+		}
+
 		buffer->at(end) = value;//insert the new value.
 		end = newEnd;
 	}
@@ -51,9 +58,10 @@ public:
 	// destroys the buffer.
 	~ConcurrentRingBuffer(){
 		// I really, really hope that you're not still using this object...
-		while( start != end ){
-			delete buffer->at(start);
-			start = incr(start);
+
+		// clear the entire array.
+		for(size_t index; index < size; index++ ){
+			delete buffer->at(index);
 		}
 		delete buffer;
 	}
