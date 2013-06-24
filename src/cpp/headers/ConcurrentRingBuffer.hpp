@@ -1,3 +1,6 @@
+#ifndef _CONCURRENT_RING_BUFFER_HPP_
+#define _CONCURRENT_RING_BUFFER_HPP_
+
 // DO NOT, UNDER ANY CIRCUMSTANCES
 // THINK THAT THIS CLASS IS A GOOD
 // EXAMPLE OF THREAD SAFE CODE.
@@ -6,9 +9,6 @@
 // is highly concurrent, but only
 // when you know what you're doing.
 
-
-#ifndef _CONCURRENT_RING_BUFFER_HPP_
-#define _CONCURRENT_RING_BUFFER_HPP_
 
 #include <array>
 
