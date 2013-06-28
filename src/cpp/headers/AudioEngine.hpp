@@ -19,6 +19,8 @@
 // Depends on how quickly we can check it from outside.
 #define _maxFinishedSoundCount ((_maxConcurrentPlayCount+1)*2)
 
+namespace Whisper {
+
 class AudioEngine {
 public:
 	AudioEngine( void* audioSettings );
@@ -51,5 +53,7 @@ private:
     ConcurrentRingBuffer<Sound*,(_maxQueueBeforeReadCount+1)> newSoundBuffer;
     ConcurrentRingBuffer<Sound*,(_maxFinishedSoundCount+1)> playedSoundBuffer;
 };
+
+}
 
 #endif

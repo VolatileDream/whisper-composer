@@ -5,6 +5,8 @@
 
 #include "IllegalArgumentsException.hpp"
 
+namespace Whisper {
+
 typedef unsigned int size_t;
 
 template<typename T>
@@ -19,11 +21,13 @@ public:
 		return new dyn_array( arr, size, true );
 	}
 
-	std::unique_ptr<dyn_array<T>> subarray(size_t offset, size_t length) throw (IllegalArgumentsException, std::bad_alloc) {
+	std::unique_ptr<dyn_array<T>> subarray(size_t offset, size_t length)
+		const throw
+	(IllegalArgumentsException, std::bad_alloc) {
 		if(
 			offset < 0
 			|| length < 0
-			|| offset + length > data->size
+			|| offset + length > size
 		){
 			throw IllegalArgumentsException();
 		}
@@ -39,4 +43,5 @@ private:
 	const bool canFree;
 };
 
+}
 #endif

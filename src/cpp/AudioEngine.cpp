@@ -2,6 +2,8 @@
 
 #include "AudioEngine.hpp"
 
+namespace Whisper {
+
 // some small helper functions
 template<typename T>
 static T min( T a, T b ){
@@ -120,5 +122,7 @@ void AudioEngine::copyNewSoundsToExisting(){
 	if( sound != NULL && playingSoundsLength == playingSounds.max_size() ){
 		//TODO Adding too many sounds
 	}
+
+}
 
 }

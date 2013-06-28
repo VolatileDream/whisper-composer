@@ -3,10 +3,14 @@
 
 #include <exception>
 
+namespace Whisper {
+
 class IllegalArgumentsException : public std::exception {
 	virtual const char* what() const throw() {
 		return "Function passed illegal arguments.";
 	}
 };
+
+}
 
 #endif

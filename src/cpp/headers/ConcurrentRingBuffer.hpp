@@ -12,6 +12,8 @@
 
 #include <array>
 
+namespace Whisper {
+
 template<typename T, size_t size>
 class ConcurrentRingBuffer {
 public:
@@ -53,5 +55,7 @@ private:
 
 	std::array<T,size> buffer;
 };
+
+}
 
 #endif
