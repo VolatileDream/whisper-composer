@@ -15,15 +15,11 @@
 template<typename T, size_t size>
 class ConcurrentRingBuffer {
 public:
-	ConcurrentRingBuffer(): start(0), end(0) {
-		buffer = new std::array<T*,size>;
-		buffer->fill(NULL);// make sure it's empty...
-	}
+	ConcurrentRingBuffer(): start(0), end(0) {}
 
 	// adds an item to the buffer, returns true on success
-	// Note that the buffer takes responsibility of the pointer.
-	// And will free it when it is done with it.
-	bool add( T* value ){
+	// Note that the buffer does not take responsibility of the pointer.
+	bool add( T value ){
 		// remember that start + end are stale.
 		int newEnd = incr(end);
 		if( start == newEnd ){
@@ -33,40 +29,19 @@ public:
 			return false;
 		}
 
-		// this is a hack to avoid deallocation in the port
-		// audio callback (possibly an os interrupt)
-		T* item = buffer->at(end);
-		if( item != NULL ){
-			delete item;
-		}
-
-		buffer->at(end) = value;//insert the new value.
+		buffer.at(end) = value;//insert the new value.
 		end = newEnd;
 	}
 
 	// removes the next item from the buffer, returns NULL on failure
 	// responsibility for releasing the pointer is NOT passed to the caller.
-	// CRB will eventually clear the pointer, either when the buffer is
-	// destroyed, or `size` items have been inserted, causing an overwrite
-	// to the location in memory.
-	T* remove(){
+	bool remove( T& val ){
 		if( start == end ){
-			return NULL;
+			return false;
 		}
-		T* item = buffer->at(start);
+		val = buffer.at(start);
 		start = incr(start);
-		return item;
-	}
-		
-	// destroys the buffer.
-	~ConcurrentRingBuffer(){
-		// I really, really hope that you're not still using this object...
-
-		// clear the entire array.
-		for(size_t index; index < size; index++ ){
-			delete buffer->at(index);
-		}
-		delete buffer;
+		return true;
 	}
 private:
 	size_t incr( size_t i ) const {
@@ -76,7 +51,7 @@ private:
 	size_t start;
 	size_t end;
 
-	std::array<T*,size>* buffer;
+	std::array<T,size> buffer;
 };
 
 #endif

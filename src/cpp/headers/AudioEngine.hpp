@@ -2,19 +2,33 @@
 #define _AUDIO_ENGINE_HPP_
 
 #include <array>
+#include <tuple>
 
 //#include "portaudio.h"
 
-#include "global.hpp"
+#include "dyn_array.hpp"
 #include "ConcurrentRingBuffer.hpp"
+
+#include "Sound.hpp"
+
+#define _maxConcurrentPlayCount 127
+#define _maxQueueBeforeReadCount 63
+
+// Tune this:
+// We might need to raise/lower it.
+// Depends on how quickly we can check it from outside.
+#define _maxFinishedSoundCount ((_maxConcurrentPlayCount+1)*2)
 
 class AudioEngine {
 public:
 	AudioEngine( void* audioSettings );
 	
-	// does not take responsibility of the passed pointer
-	//returns true on success
-	bool passData( dyn_array<float>* content );
+	// tries to add a sound, true on success
+	bool addSound( Sound* sound );
+
+	// retrieves a pointer to a sound that
+	// is done playing.
+	Sound* getFinishedSound();
 	
 	// closes the portAudio stuff down.
 	~AudioEngine();
@@ -26,7 +40,16 @@ private:
     //    ,const PaStreamCallbackTimeInfo* timeInfo
     //    ,PaStreamCallbackFlags statusFlags
     );
-    ConcurrentRingBuffer<dyn_array<float>,128> ring;
+
+	void writeOutPreExisting(float* out, unsigned long framesPerBuffer, size_t startIndex = 0);
+
+	void copyNewSoundsToExisting();
+
+	size_t playingSoundsLength;
+	std::array<std::tuple<Sound*,unsigned long>,(_maxConcurrentPlayCount+1)> playingSounds;
+
+    ConcurrentRingBuffer<Sound*,(_maxQueueBeforeReadCount+1)> newSoundBuffer;
+    ConcurrentRingBuffer<Sound*,(_maxFinishedSoundCount+1)> playedSoundBuffer;
 };
 
 #endif
