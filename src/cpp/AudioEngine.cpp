@@ -1,4 +1,7 @@
 #include <algorithm>
+#include <iostream>
+
+#include "portaudio.h"
 
 #include "AudioEngine.hpp"
 
@@ -13,11 +16,58 @@ static T min( T a, T b ){
 	return b;
 }
 
+// actual port audio callback
+int AudioEngineStreamCallback(
+	const void *inputBuffer
+	,void *outputBuffer
+	,unsigned long framesPerBuffer
+	,const PaStreamCallbackTimeInfo* timeInfo
+	,PaStreamCallbackFlags statusFlags
+	,void *userData
+){
+    /* Cast data passed through stream to our structure. */
+    AudioEngine* engine = (AudioEngine*)userData;   
+    return engine->givePortAudioData(outputBuffer, framesPerBuffer);
+}
+
+static void print_pa_error(PaError err, const char* message = NULL){
+	if( err != paNoError ){
+		std::cout << message << Pa_GetErrorText(err) << std::endl;
+		return;
+	}
+}
 
 // Class stuff
 
 AudioEngine::AudioEngine( void* audioSettings ){
 	// uhhh...TODO, dunno how to handle audio settings yet.
+	PaError err = Pa_Initialize();
+	if( err != paNoError ){
+		std::cout << "Error initializing port audio: " << Pa_GetErrorText( err ) << std::endl;
+		const PaHostErrorInfo* hostError;
+		hostError = Pa_GetLastHostErrorInfo();
+		std::cout << "Host error: " << hostError->errorText << std::endl;
+		return;
+	}
+	
+	err = Pa_OpenDefaultStream(
+		&stream,
+		
+		0, // no input
+		2, // stereo out
+		
+		paFloat32, // float
+
+		44100, //sample rate
+		1024, // frames per buffer
+
+		AudioEngineStreamCallback,
+		this
+	);
+	print_pa_error(err, "Error opening stream: ");
+
+	err = Pa_StartStream(stream);
+	print_pa_error(err, "Error starting stream: ");
 }
 
 bool AudioEngine::addSound( Sound* sound ){
@@ -32,6 +82,18 @@ bool AudioEngine::addSound( Sound* sound ){
 
 AudioEngine::~AudioEngine(){
 	// TODO clean up port audio stuff
+	// we opened a stream, close it.
+	PaError err = Pa_StopStream(stream);
+
+	print_pa_error(err, "Error stopping stream: ");
+
+	// we started port audio, stop it.
+	// note that if we don't we could
+	// cause all sorts of errors with
+	// the audio 
+	err = Pa_Terminate();
+
+	print_pa_error(err, "Error terminating port audio: ");
 }
 
 // Private Stuff beyond here.

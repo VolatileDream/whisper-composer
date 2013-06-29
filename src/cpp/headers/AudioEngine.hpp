@@ -4,7 +4,7 @@
 #include <array>
 #include <tuple>
 
-//#include "portaudio.h"
+#include "portaudio.h"
 
 #include "dyn_array.hpp"
 #include "ConcurrentRingBuffer.hpp"
@@ -39,15 +39,26 @@ private:
 	int givePortAudioData(
 		void *outputBuffer
         ,unsigned long framesPerBuffer
+    // don't need these?
     //    ,const PaStreamCallbackTimeInfo* timeInfo
     //    ,PaStreamCallbackFlags statusFlags
     );
+    // port audio stream pointer
+    PaStream* stream;
+    // friend the port audio callback
+    friend int AudioEngineStreamCallback(const void *inputBuffer
+		,void *outputBuffer
+		,unsigned long framesPerBuffer
+		,const PaStreamCallbackTimeInfo* timeInfo
+		,PaStreamCallbackFlags statusFlags
+		,void *userData
+	);
 
 	void writeOutPreExisting(float* out, unsigned long framesPerBuffer, size_t startIndex = 0);
 
 	void copyNewSoundsToExisting();
 
-	size_t playingSoundsLength;
+	size_t playingSoundsLength = 0;
 	std::array<std::tuple<Sound*,unsigned long>,(_maxConcurrentPlayCount+1)> playingSounds;
 
     ConcurrentRingBuffer<Sound*,(_maxQueueBeforeReadCount+1)> newSoundBuffer;
