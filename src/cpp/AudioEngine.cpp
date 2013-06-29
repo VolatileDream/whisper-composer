@@ -80,6 +80,14 @@ bool AudioEngine::addSound( Sound* sound ){
 	return newSoundBuffer.add( sound );
 }
 
+Sound* AudioEngine::getFinishedSound(){
+	Sound* sound = NULL;
+	if( playedSoundBuffer.remove(sound) ){
+		return sound;
+	}
+	return NULL;
+}
+
 AudioEngine::~AudioEngine(){
 	// TODO clean up port audio stuff
 	// we opened a stream, close it.
