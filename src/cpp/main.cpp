@@ -9,17 +9,6 @@
 
 using namespace Whisper;
 
-Sound* as();
-void crb();
-void ae();
-
-int main(){
-	
-	crb();
-
-	ae();
-}
-
 Sound* as(){
 
 	float PI = 4*std::acos(1.0);
@@ -39,19 +28,42 @@ Sound* as(){
 	return sound;
 }
 
+Sound* getNextSound( AudioEngine* engine, unsigned long timeout ){
+	Sound* out = NULL;
+
+	while( timeout > 0 && (out=engine->getFinishedSound()) == NULL ){
+		Pa_Sleep(100);
+		timeout -= 100;
+	}
+
+	return out;
+}
+
 void ae(){
+
+	Sound* soundOne = as();
+	Sound* soundTwo = as();
 
 	AudioEngine* engine = new AudioEngine( (void*) NULL );
 
-	engine->addSound( as(), true );
+	engine->addSound( soundOne, true );
+	engine->addSound( soundTwo, false );
 
-	Sound* doneSound = NULL;
-	while( doneSound == NULL ){
-		Pa_Sleep(500);
-		doneSound = engine->getFinishedSound();
+	unsigned long timeout = 1000;
+	Sound* sound = getNextSound(engine, timeout);
+
+	if( sound == soundTwo ){
+		std::cout << "Error, managed to retrieve SoundTwo" << std::endl;
 	}
-	delete doneSound;
 
+	sound = getNextSound(engine, timeout);
+
+	if( sound == soundTwo ){
+		std::cout << "Error, managed to retrieve SoundTwo" << std::endl;
+	}
+
+	delete soundOne;
+	delete soundTwo;
 	delete engine;
 }
 
@@ -74,4 +86,11 @@ void crb(){
 
 	std::cout << "Max reads after full for size " << size << " was: " << index << std::endl;
 	delete crb;
+}
+
+int main(){
+	
+	crb();
+
+	ae();
 }
