@@ -21,15 +21,29 @@
 
 namespace Whisper {
 
+class SoundData {
+public:
+	SoundData( Sound* s, bool n ) : sound(s), needsNotify(n) {}
+	SoundData() : SoundData(NULL,true) {}
+	Sound* sound;
+	bool needsNotify;
+	unsigned long offset = 0;
+};
+
 class AudioEngine {
 public:
 	AudioEngine( void* audioSettings );
 	
 	// tries to add a sound, true on success
-	bool addSound( Sound* sound );
+	// flagFinish:
+	//  if false, the sound will never show up
+	//  in the getFinishedSound().
+	bool addSound( Sound* sound, bool flagFinish = true );
 
 	// retrieves a pointer to a sound that
-	// is done playing.
+	// is done playing. Keep calling until
+	// this returns NULL to get all the
+	// sounds that have finished playing.
 	Sound* getFinishedSound();
 	
 	// closes the portAudio stuff down.
@@ -59,9 +73,9 @@ private:
 	void copyNewSoundsToExisting();
 
 	size_t playingSoundsLength = 0;
-	std::array<std::tuple<Sound*,unsigned long>,(_maxConcurrentPlayCount+1)> playingSounds;
+	std::array<SoundData,(_maxConcurrentPlayCount+1)> playingSounds;
 
-    ConcurrentRingBuffer<Sound*,(_maxQueueBeforeReadCount+1)> newSoundBuffer;
+    ConcurrentRingBuffer<SoundData,(_maxQueueBeforeReadCount+1)> newSoundBuffer;
     ConcurrentRingBuffer<Sound*,(_maxFinishedSoundCount+1)> playedSoundBuffer;
 };
 

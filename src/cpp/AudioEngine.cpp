@@ -70,14 +70,16 @@ AudioEngine::AudioEngine( void* audioSettings ){
 	print_pa_error(err, "Error starting stream: ");
 }
 
-bool AudioEngine::addSound( Sound* sound ){
+bool AudioEngine::addSound( Sound* sound, bool flagFinish ){
 
 	if( sound == NULL || sound->length() == 0 ){
 		// we're too nice to say anything, we pretend it worked.
 		return true;
 	}
 	
-	return newSoundBuffer.add( sound );
+	SoundData data (sound, flagFinish);
+
+	return newSoundBuffer.add( data );
 }
 
 Sound* AudioEngine::getFinishedSound(){
@@ -148,18 +150,17 @@ void AudioEngine::writeOutPreExisting(float* out, unsigned long framesPerBuffer,
 	float soundAmplitude = (playingSoundsLength - startIndex)*1.0/playingSoundsLength;
 
 	Sound* currentSound;
-	unsigned long soundOffset, soundRemaining;
 
 	for(size_t i= startIndex; i < playingSoundsLength; i++){
 
-		std::tie( currentSound, soundOffset ) = playingSounds.at(i);
+		SoundData data  = playingSounds.at(i);
 
-		soundRemaining = currentSound->length() - soundOffset;
+		unsigned long soundRemaining = data.sound->length() - data.offset;
 
 		unsigned long outputCount = min( framesPerBuffer, soundRemaining );
 
 		// Write the song out
-		dyn_array<float> soundData = *( currentSound->getData(soundOffset, soundRemaining) );
+		dyn_array<float> soundData = *( data.sound->getData(data.offset, soundRemaining) );
 
 		for( unsigned long index = 0; index < soundRemaining; index++){
 			out[index] = out[index] + soundAmplitude * soundData.data[index];
@@ -171,7 +172,7 @@ void AudioEngine::writeOutPreExisting(float* out, unsigned long framesPerBuffer,
 			playingSounds.at(i) = playingSounds.at(playingSoundsLength);
 			i--;
 
-			if( !playedSoundBuffer.add(currentSound) ){
+			if( data.needsNotify && !playedSoundBuffer.add(data.sound) ){
 				// TODO what do we do?
 			}
 		}
@@ -180,16 +181,18 @@ void AudioEngine::writeOutPreExisting(float* out, unsigned long framesPerBuffer,
 }
 
 void AudioEngine::copyNewSoundsToExisting(){
-	Sound* sound = NULL;
+	SoundData sound;
+	bool hasSound = false;
 	while(
-		newSoundBuffer.remove(sound)
+		(hasSound = newSoundBuffer.remove(sound))
 		&& playingSoundsLength < playingSounds.max_size()
 	){
-		playingSounds.at( playingSoundsLength ) = std::tuple<Sound*,unsigned long>(sound, 0);
+		playingSounds.at( playingSoundsLength ) = sound;
 		playingSoundsLength++;
 	}
 
-	if( sound != NULL && playingSoundsLength == playingSounds.max_size() ){
+	// hasSound = true; iff we couldn't add all the sounds
+	if( hasSound && playingSoundsLength == playingSounds.max_size() ){
 		//TODO Adding too many sounds
 	}
 

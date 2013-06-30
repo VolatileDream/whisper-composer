@@ -43,7 +43,7 @@ void ae(){
 
 	AudioEngine* engine = new AudioEngine( (void*) NULL );
 
-	engine->addSound( as() );
+	engine->addSound( as(), true );
 
 	Sound* doneSound = NULL;
 	while( doneSound == NULL ){
