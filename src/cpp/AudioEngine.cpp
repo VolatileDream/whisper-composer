@@ -158,7 +158,7 @@ void AudioEngine::writeOutPreExisting(float* out, unsigned long framesPerBuffer,
 
 		unsigned long outputCount = min( framesPerBuffer, soundRemaining );
 
-		// TODO Write the song out
+		// Write the song out
 		dyn_array<float> soundData = *( currentSound->getData(soundOffset, soundRemaining) );
 
 		for( unsigned long index = 0; index < soundRemaining; index++){

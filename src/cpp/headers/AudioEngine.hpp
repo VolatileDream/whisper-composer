@@ -11,8 +11,8 @@
 
 #include "Sound.hpp"
 
-#define _maxConcurrentPlayCount 127
-#define _maxQueueBeforeReadCount 63
+#define _maxConcurrentPlayCount 31
+#define _maxQueueBeforeReadCount 15
 
 // Tune this:
 // We might need to raise/lower it.
