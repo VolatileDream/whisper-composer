@@ -129,6 +129,10 @@ WC_Sound* WC_GetFinishedSound( WC_AudioEngine* engine ){
 
 void WC_Dispose( WC_AudioEngine* engine ){
 
+	if( engine == NULL ){
+		return;
+	}
+
 	if( engine->playingSounds != NULL ){
 		free( engine->playingSounds );
 	}
