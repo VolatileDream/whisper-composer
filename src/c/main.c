@@ -11,12 +11,12 @@
 
 WC_Sound* as(){
 
-	unsigned int size = 256;
+	const unsigned int size = 2 << 14;
 	float PI = 4*acos(1.0);
 
 	WC_Sound* sound = malloc( sizeof(WC_Sound) );
 	sound->length = size;
-	sound->audioData = malloc(sizeof(float) * size);
+	sound->audioData = malloc(size * sizeof(float));
 
 	for(unsigned int i=0; i < size; i++){
 		sound->audioData[i] = sin( i/PI ) * sin(4*i/PI);
@@ -47,20 +47,20 @@ void ae(){
 	WC_Init(engine, NULL);
 
 	WC_AddSound( engine, soundOne, true );
-	WC_AddSound( engine, soundTwo, false );
+	WC_AddSound( engine, soundTwo, true );
 
-	unsigned long timeout = 1000;
+	unsigned long timeout = 5000;
 	WC_Sound* sound = getNextSound(engine, timeout);
 
-	if( sound == soundTwo ){
-		printf("Error, managed to retrieve SoundTwo\n");
-	}
+	//if( sound == soundTwo ){
+	//	printf("Error, managed to retrieve SoundTwo\n");
+	//}
 
 	sound = getNextSound(engine, timeout);
 
-	if( sound == soundTwo ){
-		printf("Error, managed to retrieve SoundTwo\n");
-	}
+	//if( sound == soundTwo ){
+	//	printf("Error, managed to retrieve SoundTwo\n");
+	//}
 
 	free( soundOne->audioData );
 	free( soundOne );

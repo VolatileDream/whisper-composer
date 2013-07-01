@@ -46,11 +46,11 @@ bool WC_Init( WC_AudioEngine* engine, void* settings ){
 	engine->stream = NULL;
 
 	// try to do all of our memory allocations
-	engine->playingSounds = malloc( sizeof(SoundData) * _maxConcurrentPlayCount);
+	engine->playingSounds = malloc(_maxConcurrentPlayCount * sizeof(SoundData));
 	
 	if( engine->playingSounds == NULL
 		|| !WC_RB_Create( &(engine->newSoundBuffer), sizeof(SoundData), _maxQueuedSoundCount )
-		|| !WC_RB_Create( &(engine->playedSoundBuffer), sizeof(SoundData), _maxFinishedSoundCount )
+		|| !WC_RB_Create( &(engine->playedSoundBuffer), sizeof(WC_Sound), _maxFinishedSoundCount )
 	){
 		goto Error;
 	}
@@ -190,6 +190,8 @@ static void copyNewSoundsToExisting( WC_AudioEngine* engine ){
 
 static void writeOutPreExisting(WC_AudioEngine* engine, float* out, unsigned int framesPerBuffer, size_t startIndex){
 	
+	if( engine->playingSoundsLength == 0 || engine->playingSoundsLength - startIndex == 0) return;
+
 	float soundAmplitude = (engine->playingSoundsLength - startIndex)*1.0/engine->playingSoundsLength;
 
 	for(size_t i= startIndex; i < engine->playingSoundsLength; i++){
@@ -205,7 +207,7 @@ static void writeOutPreExisting(WC_AudioEngine* engine, float* out, unsigned int
 		// Write the song out
 		float* rawSound = data.sound->audioData + data.offset;
 
-		for( unsigned int index = 0; index < soundRemaining; index++){
+		for( unsigned int index = 0; index < outputCount; index++){
 			out[index] = out[index] + soundAmplitude * rawSound[index];
 		}
 
@@ -218,6 +220,9 @@ static void writeOutPreExisting(WC_AudioEngine* engine, float* out, unsigned int
 			if( data.needsNotify && ! WC_RB_Add( &engine->playedSoundBuffer, data.sound) ){
 				// TODO what do we do?
 			}
+		}else{
+			data.offset = data.offset + outputCount;
+			engine->playingSounds[i] = data;
 		}
 
 	}
@@ -227,11 +232,15 @@ static int givePortAudioData(
 	 	WC_AudioEngine* engine,
 		void *outputBuffer
         ,unsigned long framesPerBuffer
-//        ,const PaStreamCallbackTimeInfo* timeInfo
-//        ,PaStreamCallbackFlags statusFlags
+        //,const PaStreamCallbackTimeInfo* timeInfo
+        //,PaStreamCallbackFlags statusFlags
     ){
 
 	float* out = (float*)outputBuffer;
+
+	for(unsigned int i=0; i < framesPerBuffer; i++){
+	//	out[i] = 0.0;
+	}
 
 	// do all the exsting sounds first, then new sounds.
 
