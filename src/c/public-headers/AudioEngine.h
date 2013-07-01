@@ -1,7 +1,7 @@
 #ifndef _WHISPER_AUDIOENGINE_H_
 #define _WHISPER_AUDIOENGINE_H_
 
-#include "stdbool.h"
+#include <stdbool.h>
 
 #include "Sound.h"
 

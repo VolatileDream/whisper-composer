@@ -1,7 +1,7 @@
 #ifndef _CONCURRENT_RING_BUFFER_HPP_
 #define _CONCURRENT_RING_BUFFER_HPP_
 
-#include "stdbool.h"
+#include <stdbool.h>
 
 struct WC_RingBuffer;
 typedef struct WC_RingBuffer WC_RingBuffer;

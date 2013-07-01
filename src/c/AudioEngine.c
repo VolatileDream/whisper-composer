@@ -1,6 +1,6 @@
-#include "stdlib.h"
-#include "stdio.h"
-#include "portaudio.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include <portaudio.h>
 
 #include "Sound.h"
 #include "RingBuffer.h"
@@ -14,7 +14,7 @@
 // Allocates/Frees an AudioEngine.
 // this is meant for use by wrapper libraries.
 WC_AudioEngine* WC_Allocate(void){
-	return malloc(sizeof(WC_Allocate));
+	return malloc(sizeof(WC_AudioEngine));;
 }
 void WC_Free(WC_AudioEngine* engine){
 	free(engine);
