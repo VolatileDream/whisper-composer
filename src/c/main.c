@@ -11,7 +11,7 @@
 
 WC_Sound* as(){
 
-	const unsigned int size = 2 << 14;
+	const unsigned int size = 2 << 13;
 	float PI = 4*acos(1.0);
 
 	WC_Sound* sound = malloc( sizeof(WC_Sound) );
@@ -19,7 +19,7 @@ WC_Sound* as(){
 	sound->audioData = malloc(size * sizeof(float));
 
 	for(unsigned int i=0; i < size; i++){
-		sound->audioData[i] = sin( i/PI ) * sin(4*i/PI);
+		sound->audioData[i] = sin( i/200 * 2*PI );
 	}
 
 	return sound;
@@ -31,8 +31,8 @@ WC_Sound* getNextSound( WC_AudioEngine* engine, unsigned long timeout ){
 	WC_Sound* out = NULL;
 
 	while( timeout > 0 && (out=WC_GetFinishedSound(engine)) == NULL ){
-		Pa_Sleep(100);
-		timeout -= 100;
+		Pa_Sleep(10);
+		timeout -= 10;
 	}
 
 	return out;
@@ -47,30 +47,61 @@ void ae(){
 	WC_Init(engine, NULL);
 
 	WC_AddSound( engine, soundOne, true );
-	WC_AddSound( engine, soundTwo, true );
+	WC_AddSound( engine, soundTwo, false );
 
-	unsigned long timeout = 5000;
+	unsigned long timeout = 1000;
 	WC_Sound* sound = getNextSound(engine, timeout);
 
-	//if( sound == soundTwo ){
-	//	printf("Error, managed to retrieve SoundTwo\n");
-	//}
+	if( sound == soundTwo ){
+		printf("Error, managed to retrieve SoundTwo\n");
+	}
 
 	sound = getNextSound(engine, timeout);
 
-	//if( sound == soundTwo ){
-	//	printf("Error, managed to retrieve SoundTwo\n");
-	//}
+	if( sound == soundTwo ){
+		printf("Error, managed to retrieve SoundTwo\n");
+	}
+
+	// tell the engine to stop BEFORE we free the sounds
+	WC_Dispose(engine);
 
 	free( soundOne->audioData );
 	free( soundOne );
 	free( soundTwo->audioData );
 	free( soundTwo );
-
-	WC_Dispose(engine);
 }
 
+void ae2(){
 
+	WC_Sound* soundOne = as();
+
+	WC_AudioEngine* engine = WC_Allocate();
+	WC_Init(engine, NULL);
+
+	const unsigned int stepSize = 10;
+	unsigned long timeout = 2000;
+	unsigned int playCount = 0;
+
+	WC_Sound* tmp = NULL;
+
+	WC_AddSound( engine, soundOne, true );
+	
+	while( playCount < 20 && timeout > 0 ){
+
+		while( timeout > 0 && (tmp=WC_GetFinishedSound(engine)) == NULL ){
+			Pa_Sleep(stepSize);
+			timeout -= stepSize;
+		}
+
+		WC_AddSound(engine, soundOne, true);
+		playCount++;
+	}
+
+	WC_Dispose(engine);
+	
+	free( soundOne->audioData );
+	free( soundOne );
+}
 
 void crb(){
 	unsigned int size = 16;
@@ -133,4 +164,5 @@ int main(){
 	crb2();
 
 	ae();
+	ae2();
 }

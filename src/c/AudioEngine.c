@@ -90,7 +90,7 @@ bool WC_Init( WC_AudioEngine* engine, void* settings ){
 	// oh no...don't do this. >.<
 	return true;
 
-	Error:
+Error:
 	printf("Error with allocation of Audio Engine\n");
 	WC_Dispose(engine);
 	return false;
@@ -133,22 +133,10 @@ void WC_Dispose( WC_AudioEngine* engine ){
 		return;
 	}
 
-	if( engine->playingSounds != NULL ){
-		free( engine->playingSounds );
-	}
+	// clean up port audio stuff
 
-	WC_RB_Dispose( &engine->newSoundBuffer );
-	WC_RB_Dispose( &engine->playedSoundBuffer );
-	
-	if( engine->stream == NULL ){
-		free( engine );
-		return;
-	}
-
-	// TODO clean up port audio stuff
 	// we opened a stream, close it.
 	PaError err = Pa_StopStream(engine->stream);
-
 	print_pa_error(err, "Error stopping stream: ");
 
 	// we started port audio, stop it.
@@ -159,7 +147,14 @@ void WC_Dispose( WC_AudioEngine* engine ){
 
 	print_pa_error(err, "Error terminating port audio: ");
 
-	free(engine);
+	if( engine->playingSounds != NULL ){
+		free( engine->playingSounds );
+	}
+
+	WC_RB_Dispose( &engine->newSoundBuffer );
+	WC_RB_Dispose( &engine->playedSoundBuffer );
+	
+	free( engine );
 }
 
 // private functions:
@@ -188,17 +183,18 @@ static void copyNewSoundsToExisting( WC_AudioEngine* engine ){
 	}
 }
 
-static void writeOutPreExisting(WC_AudioEngine* engine, float* out, unsigned int framesPerBuffer, size_t startIndex){
+static void writeOutPreExisting(WC_AudioEngine* engine, float* out, unsigned int framesPerBuffer, unsigned int startIndex){
 	
-	if( engine->playingSoundsLength == 0 || engine->playingSoundsLength - startIndex == 0) return;
+	if( engine->playingSoundsLength <= 0 || engine->playingSoundsLength - startIndex <= 0) return;
 
 	float soundAmplitude = (engine->playingSoundsLength - startIndex)*1.0/engine->playingSoundsLength;
 
 	for(size_t i= startIndex; i < engine->playingSoundsLength; i++){
 
-		SoundData data  = engine->playingSounds[i];
+		SoundData data = engine->playingSounds[i];
 
-		unsigned int soundRemaining = data.sound->length - data.offset;
+		unsigned int soundRemaining = data.sound->length;
+		soundRemaining -= data.offset;
 
 		unsigned int outputCount =
 			framesPerBuffer < soundRemaining ?
@@ -206,6 +202,8 @@ static void writeOutPreExisting(WC_AudioEngine* engine, float* out, unsigned int
 
 		// Write the song out
 		float* rawSound = data.sound->audioData + data.offset;
+
+		data.offset = data.offset + outputCount;
 
 		for( unsigned int index = 0; index < outputCount; index++){
 			out[index] = out[index] + soundAmplitude * rawSound[index];
@@ -221,7 +219,6 @@ static void writeOutPreExisting(WC_AudioEngine* engine, float* out, unsigned int
 				// TODO what do we do?
 			}
 		}else{
-			data.offset = data.offset + outputCount;
 			engine->playingSounds[i] = data;
 		}
 
