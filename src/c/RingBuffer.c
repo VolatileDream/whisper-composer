@@ -21,7 +21,7 @@ bool WC_RB_Create(WC_RingBuffer* buffer, unsigned int sizeOfStruct, unsigned int
 		return false;
 	}
 
-	buffer->data = malloc( sizeOfStruct * size );
+	buffer->data = malloc(size * sizeOfStruct);
 
 	if( buffer->data == NULL ){
 		return false;
