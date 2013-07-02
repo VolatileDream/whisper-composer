@@ -183,18 +183,17 @@ static void copyNewSoundsToExisting( WC_AudioEngine* engine ){
 	}
 }
 
-static void writeOutPreExisting(WC_AudioEngine* engine, float* out, unsigned int framesPerBuffer, unsigned int startIndex){
+static void writeOutPreExisting(WC_AudioEngine* engine, float* out, unsigned int framesPerBuffer){
 	
-	if( engine->playingSoundsLength <= 0 || engine->playingSoundsLength - startIndex <= 0) return;
+	if( engine->playingSoundsLength == 0 ) return;
 
-	float soundAmplitude = (engine->playingSoundsLength - startIndex)*1.0/engine->playingSoundsLength;
+	float soundAmplitude = engine->playingSoundsLength*1.0/engine->playingSoundsLength;
 
-	for(size_t i= startIndex; i < engine->playingSoundsLength; i++){
+	for(size_t i= 0; i < engine->playingSoundsLength; i++){
 
 		SoundData data = engine->playingSounds[i];
 
-		unsigned int soundRemaining = data.sound->length;
-		soundRemaining -= data.offset;
+		unsigned int soundRemaining = data.sound->length - data.offset;
 
 		unsigned int outputCount =
 			framesPerBuffer < soundRemaining ?
@@ -226,46 +225,28 @@ static void writeOutPreExisting(WC_AudioEngine* engine, float* out, unsigned int
 }
 
 static int givePortAudioData(
-	 	WC_AudioEngine* engine,
-		void *outputBuffer
-        ,unsigned long framesPerBuffer
-        //,const PaStreamCallbackTimeInfo* timeInfo
-        //,PaStreamCallbackFlags statusFlags
-    ){
+ 	WC_AudioEngine* engine,
+	void *outputBuffer
+    ,unsigned long framesPerBuffer
+    //,const PaStreamCallbackTimeInfo* timeInfo
+    //,PaStreamCallbackFlags statusFlags
+	){
 
 	float* out = (float*)outputBuffer;
 
-	for(unsigned int i=0; i < framesPerBuffer; i++){
-	//	out[i] = 0.0;
+	if( engine->playingSoundsLength == 0 ){
+		for(unsigned long i = 0; i < framesPerBuffer; i++){
+				out[i] = 0.0;
+		}
+	}else{
+		// do all the exsting sounds first, then new sounds.
+		writeOutPreExisting(engine, out, framesPerBuffer);
 	}
 
-	// do all the exsting sounds first, then new sounds.
-
-	writeOutPreExisting(engine, out, framesPerBuffer, 0);
-
-	// new sounds
-
-	size_t oldSoundLength = engine->playingSoundsLength;
-
+	// new sounds?
+	// the new sounds we pick up will get played next time
 	copyNewSoundsToExisting(engine);
-
-	if( oldSoundLength == engine->playingSoundsLength ){
-		// no new sounds
-		return 0;
-	}
-
-	// adjust the stream amplitude because we've added new sounds
-
-	float amplitudeModifier =
-		(engine->playingSoundsLength - oldSoundLength)
-			*1.0/engine->playingSoundsLength;
-
-	for(unsigned long i=0; i < framesPerBuffer; i++){
-		out[i] = out[i] * amplitudeModifier;
-	}
-
-	writeOutPreExisting(engine, out, framesPerBuffer, oldSoundLength);
-
+	
 	return 0;
 }
 

@@ -11,15 +11,17 @@
 
 WC_Sound* as(){
 
-	const unsigned int size = 2 << 13;
-	float PI = 4*acos(1.0);
+	const unsigned int size = 44100;
+	const float PI = 3.14159265358979323846;
+	printf("pi: %f\n", PI);
 
 	WC_Sound* sound = malloc( sizeof(WC_Sound) );
 	sound->length = size;
 	sound->audioData = malloc(size * sizeof(float));
 
 	for(unsigned int i=0; i < size; i++){
-		sound->audioData[i] = sin( i/200 * 2*PI );
+		float pos =  i* 1.0/400.0 * 2*PI;
+		sound->audioData[i] = sin(pos);
 	}
 
 	return sound;
@@ -79,7 +81,7 @@ void ae2(){
 	WC_Init(engine, NULL);
 
 	const unsigned int stepSize = 10;
-	unsigned long timeout = 2000;
+	unsigned long timeout = 5000;
 	unsigned int playCount = 0;
 
 	WC_Sound* tmp = NULL;
@@ -96,6 +98,9 @@ void ae2(){
 		WC_AddSound(engine, soundOne, true);
 		playCount++;
 	}
+
+	printf("Waiting...\n");
+	Pa_Sleep(1000);
 
 	WC_Dispose(engine);
 	
@@ -163,6 +168,6 @@ int main(){
 	crb();
 	crb2();
 
-	ae();
+	//ae();
 	ae2();
 }
