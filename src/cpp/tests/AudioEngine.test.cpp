@@ -7,11 +7,11 @@
 
 #include "test_time.hpp"
 
-Whisper::Sound* createSinSound( unsigned int size = 44100 ){
+Sound* createSinSound( unsigned int size = 44100 ){
 
   const float PI = 3.14159265358979323846;
 
-  Whisper::Sound* sound = new Whisper::Sound();
+  Sound* sound = new Sound();
   sound->length = size;
   sound->audioData = new float[size];
 
@@ -36,7 +36,7 @@ TEST_CASE( "AudioEngine same data", "[AudioEngine]" ){
 	const unsigned long framesPerBuffer = 1024;
 	float outputBuffer[framesPerBuffer] = {0};
 
-	Whisper::Sound* sound = createSinSound();
+	Sound* sound = createSinSound();
 
 	Whisper::AudioEngine* engine = getTestEngine();
 
@@ -81,7 +81,7 @@ TEST_CASE( "AudioEngine callback speed under 2ms", "[performance]" ){
 	const unsigned long framesPerBuffer = 1024;
 	float outputBuffer[framesPerBuffer] = {0};
 
-	Whisper::Sound* sound = createSinSound();
+	Sound* sound = createSinSound();
 
 	Whisper::AudioEngine* engine = getTestEngine();
 
@@ -116,7 +116,7 @@ TEST_CASE( "AudioEngine sound finish flagged", "[AudioEngine]" ){
 	const unsigned long framesPerBuffer = 1024;
 	float outputBuffer[framesPerBuffer] = {0};
 
-	Whisper::Sound* sound = createSinSound(128);
+	Sound* sound = createSinSound(128);
 
 	Whisper::AudioEngine* engine = getTestEngine();
 
@@ -134,7 +134,7 @@ TEST_CASE( "AudioEngine sound finish flagged", "[AudioEngine]" ){
 			, (void*) engine	//void *userData
 		);
 	}
-	Whisper::Sound* outSound = engine->getFinishedSound();
+	Sound* outSound = engine->getFinishedSound();
 
 	CHECK( outSound == sound );
 
@@ -154,7 +154,7 @@ TEST_CASE( "AudioEngine sound finish flagged", "[AudioEngine]" ){
 	}
 	outSound = engine->getFinishedSound();
 
-	CHECK( ((Whisper::Sound*)nullptr) == outSound );
+	CHECK( ((Sound*)nullptr) == outSound );
 
 
 

@@ -1,13 +1,17 @@
 #ifndef _WHISPER_SOUND_H_
 #define _WHISPER_SOUND_H_
 
-namespace Whisper {
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-struct Sound {
+typedef struct {
 	float* audioData;
 	unsigned long length;
-};
+} Sound;
 
+#ifdef __cplusplus
 }
+#endif
 
 #endif
