@@ -139,7 +139,9 @@ int AudioEngine::fetchSoundData(
 	// TODO we currently only support one format
 	float* out = (float*)outputBuffer;
 
-	// clear the buffer
+	// clear the buffer, because there could be junk in it.
+	// and because writeOutPreExisting/2 doesn't overwrite
+	// the buffer, but adds to it's contents
 	for(unsigned long i = 0; i < framesPerBuffer; i++){
 			out[i] = 0.0;
 	}
