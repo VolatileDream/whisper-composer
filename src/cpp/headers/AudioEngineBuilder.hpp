@@ -80,10 +80,18 @@ public:
 			AudioEngine::AudioEngine_PortAudioCallback,
 			engine
 		);
-		print_pa_error(err, "Error opening stream: ");
+
+		if( err != paNoError ){
+			print_pa_error(err, "Error opening stream: ");
+			goto Error;
+		}
 
 		err = Pa_StartStream(engine->stream);
-		print_pa_error(err, "Error starting stream: ");
+		
+		if( err != paNoError ){
+			print_pa_error(err, "Error starting stream: ");
+			goto Error;
+		}
 
 		return engine;
 
