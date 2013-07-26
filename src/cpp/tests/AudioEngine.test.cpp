@@ -53,7 +53,7 @@ TEST_CASE( "AudioEngine same data", "[AudioEngine]" ){
 
 	// first pass doesn't pickup new things.
 	for( unsigned long i = 0; i < framesPerBuffer ; i++ ){
-		REQUIRE( outputBuffer[i] == 0 );
+		CHECK( outputBuffer[i] == 0 );
 	}
 
 	Whisper::AudioEngine::AudioEngine_PortAudioCallback(
@@ -67,7 +67,7 @@ TEST_CASE( "AudioEngine same data", "[AudioEngine]" ){
 
 	// second call does
 	for( unsigned long i = 0; i < framesPerBuffer ; i++ ){
-		REQUIRE( outputBuffer[i] == sound->audioData[i] );
+		CHECK( outputBuffer[i] == sound->audioData[i] );
 	}	
 
 	delete engine;
@@ -102,7 +102,7 @@ TEST_CASE( "AudioEngine callback speed under 2ms", "[performance]" ){
 
 	for(int i =0; i < 5 ; i++ ){
 		seconds = test_time( func );
-		REQUIRE( seconds < 2 ); // must be faster than 2 milliseconds
+		CHECK( seconds < 2 ); // must be faster than 2 milliseconds
 	}
 
 	delete engine;
@@ -136,7 +136,7 @@ TEST_CASE( "AudioEngine sound finish flagged", "[AudioEngine]" ){
 	}
 	Whisper::Sound* outSound = engine->getFinishedSound();
 
-	REQUIRE( outSound == sound );
+	CHECK( outSound == sound );
 
 		
 	engine->addSound(sound, false);
@@ -154,7 +154,7 @@ TEST_CASE( "AudioEngine sound finish flagged", "[AudioEngine]" ){
 	}
 	outSound = engine->getFinishedSound();
 
-	REQUIRE( ((Whisper::Sound*)nullptr) == outSound );
+	CHECK( ((Whisper::Sound*)nullptr) == outSound );
 
 
 
