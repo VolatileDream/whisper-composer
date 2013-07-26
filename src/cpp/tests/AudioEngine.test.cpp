@@ -98,11 +98,11 @@ TEST_CASE( "AudioEngine callback speed under 2ms", "[performance]" ){
 		);
 	};
 
-	double seconds = 0;
+	double milliseconds = 0;
 
 	for(int i =0; i < 5 ; i++ ){
-		seconds = test_time( func );
-		CHECK( seconds < 2 ); // must be faster than 2 milliseconds
+		milliseconds = test_time( func );
+		CHECK( milliseconds < 2 ); // must be faster than 2 milliseconds
 	}
 
 	delete engine;
