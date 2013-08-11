@@ -12,7 +12,7 @@ OUTPUT= ../../lib/
 all : $(OUTPUT)AudioEngine.o test $(OUTPUT)main
 
 $(OUTPUT)main : $(OUTPUT)AudioEngine.o main.cpp
-	$(COMPILER) $(FLAGS) $(INCLUDE) AudioEngine.o main.cpp $(LIBS) -o $(OUTPUT)main
+	$(COMPILER) $(FLAGS) $(INCLUDE) $(OUTPUT)AudioEngine.o main.cpp $(LIBS) -o $(OUTPUT)main
 
 $(OUTPUT)AudioEngine.o : AudioEngine.cpp headers/*hpp private-headers/*hpp
 	$(COMPILER) $(FLAGS) $(INCLUDE) -c AudioEngine.cpp $(LIBS) -o $(OUTPUT)AudioEngine.o
@@ -20,9 +20,9 @@ $(OUTPUT)AudioEngine.o : AudioEngine.cpp headers/*hpp private-headers/*hpp
 .PHONY: test
 test: $(OUTPUT)test.o
 	# Must pass:
-	$(OUTPUT)test.o
+	$(TIMING) $(OUTPUT)test.o
 	# Can't produce memory warnings:
-	$(TIMING) valgrind --leak-check=full $(OUTPUT)test.o
+	valgrind --leak-check=full --error-exitcode=2 $(OUTPUT)test.o --ignore-failed
 
 $(OUTPUT)test.o: $(OUTPUT)AudioEngine.o tests/*.hpp tests/*.cpp
 	$(COMPILER) $(FLAGS) $(INCLUDE) $(TEST_INCLUDE) $(OUTPUT)AudioEngine.o tests/*.cpp -o $(OUTPUT)test.o $(LIBS)
