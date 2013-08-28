@@ -1,198 +1,158 @@
-#include <algorithm>
-#include <iostream>
-
-#include "portaudio.h"
-
+#include "Sound.hpp"
 #include "AudioEngine.hpp"
+#include "AudioEngineBuilder.hpp"
+
+#include "RingBuffer.hpp"
+#include "SoundMetaData.hpp"
 
 namespace Whisper {
 
-// some small helper functions
-template<typename T>
-static T min( T a, T b ){
-	if( a < b ){
-		return a;
-	}
-	return b;
-}
-
-// actual port audio callback
-int AudioEngineStreamCallback(
-	const void *inputBuffer
-	,void *outputBuffer
-	,unsigned long framesPerBuffer
-	,const PaStreamCallbackTimeInfo* timeInfo
-	,PaStreamCallbackFlags statusFlags
-	,void *userData
-){
-    /* Cast data passed through stream to our structure. */
-    AudioEngine* engine = (AudioEngine*)userData;   
-    return engine->givePortAudioData(outputBuffer, framesPerBuffer);
-}
-
-static void print_pa_error(PaError err, const char* message = NULL){
+void print_pa_error(PaError err, const char* message ){
 	if( err != paNoError ){
-		std::cout << message << Pa_GetErrorText(err) << std::endl;
-		return;
+		printf("%s%s\n", message, Pa_GetErrorText(err) );
 	}
 }
 
-// Class stuff
+/// Tries to add a sound to the engines play queue.
+///
+/// @param flagFinish: if false, the sound will not show up
+///		in calls to getFinishedSound()
+/// @return true on success
+bool AudioEngine::addSound( Sound* sound, bool flagFinish ){
 
-AudioEngine::AudioEngine( void* audioSettings ){
-	// uhhh...TODO, dunno how to handle audio settings yet.
-	PaError err = Pa_Initialize();
-	if( err != paNoError ){
-		std::cout << "Error initializing port audio: " << Pa_GetErrorText( err ) << std::endl;
-		const PaHostErrorInfo* hostError;
-		hostError = Pa_GetLastHostErrorInfo();
-		std::cout << "Host error: " << hostError->errorText << std::endl;
-		return;
-	}
-	
-	err = Pa_OpenDefaultStream(
-		&stream,
-		
-		0, // no input
-		2, // stereo out
-		
-		paFloat32, // float
+	if( sound == nullptr || sound->length == 0 ) return false;
 
-		44100, //sample rate
-		1024, // frames per buffer
+	SoundMetaData data;
 
-		AudioEngineStreamCallback,
-		this
-	);
-	print_pa_error(err, "Error opening stream: ");
+	data.sound = sound;
+	data.needsNotify = flagFinish;
+	data.offset = 0;
 
-	err = Pa_StartStream(stream);
-	print_pa_error(err, "Error starting stream: ");
+	return this->newSoundBuffer->add(data);
 }
 
-bool AudioEngine::addSound( Sound* sound ){
-
-	if( sound == NULL || sound->length() == 0 ){
-		// we're too nice to say anything, we pretend it worked.
-		return true;
-	}
-	
-	return newSoundBuffer.add( sound );
-}
-
+/// Tries to retrieve a pointer to the next sound that's done playing.
+///
+/// @return nullptr if there is no such sound
 Sound* AudioEngine::getFinishedSound(){
-	Sound* sound = NULL;
-	if( playedSoundBuffer.remove(sound) ){
-		return sound;
+	Sound* data;
+	if( this->playedSoundBuffer->remove(data) ){
+		return data;
 	}
-	return NULL;
+	return nullptr;
 }
 
+/// Shutsdown and disposes of the AudioEngine
 AudioEngine::~AudioEngine(){
-	// TODO clean up port audio stuff
-	// we opened a stream, close it.
-	PaError err = Pa_StopStream(stream);
-
-	print_pa_error(err, "Error stopping stream: ");
-
-	// we started port audio, stop it.
-	// note that if we don't we could
-	// cause all sorts of errors with
-	// the audio 
-	err = Pa_Terminate();
-
-	print_pa_error(err, "Error terminating port audio: ");
-}
-
-// Private Stuff beyond here.
-// Warning: Here be dragons.
-
-int AudioEngine::givePortAudioData(
-		void *outputBuffer
-        ,unsigned long framesPerBuffer
-//        ,const PaStreamCallbackTimeInfo* timeInfo
-//        ,PaStreamCallbackFlags statusFlags
-    ){
-
-	float* out = (float*)outputBuffer;
-
-	// do all the exsting sounds first, then new sounds.
-
-	writeOutPreExisting(out, framesPerBuffer);
-
-	// new sounds
-
-	size_t oldSoundLength = playingSoundsLength;
-
-	copyNewSoundsToExisting();
-
-	if( oldSoundLength == playingSoundsLength ){
-		// no new sounds
-		return 0;
-	}
-
-	// adjust the stream amplitude because we've added new sounds
-
-	float amplitudeModifier = (playingSoundsLength - oldSoundLength)*1.0/playingSoundsLength;
-	for(unsigned long i=0; i < framesPerBuffer; i++){
-		out[i] = out[i] * amplitudeModifier;
-	}
-
-	writeOutPreExisting(out, framesPerBuffer, oldSoundLength);
-
-	return 0;
-}
-
-void AudioEngine::writeOutPreExisting(float* out, unsigned long framesPerBuffer, size_t startIndex){
 	
-	float soundAmplitude = (playingSoundsLength - startIndex)*1.0/playingSoundsLength;
+	if( this->stream != nullptr ){
 
-	Sound* currentSound;
-	unsigned long soundOffset, soundRemaining;
+		// we opened a stream, close it.
+		PaError err = Pa_StopStream(this->stream);
 
-	for(size_t i= startIndex; i < playingSoundsLength; i++){
+		print_pa_error(err, "Error stopping stream: ");
 
-		std::tie( currentSound, soundOffset ) = playingSounds.at(i);
+		// we started port audio, stop it.
+		// note that if we don't we could
+		// cause all sorts of errors with
+		// the audio 
+		err = Pa_Terminate();
 
-		soundRemaining = currentSound->length() - soundOffset;
+		print_pa_error(err, "Error terminating port audio: ");
 
-		unsigned long outputCount = min( framesPerBuffer, soundRemaining );
+	}
 
-		// TODO Write the song out
-		dyn_array<float> soundData = *( currentSound->getData(soundOffset, soundRemaining) );
+	delete [] this->playingSounds;
 
-		for( unsigned long index = 0; index < soundRemaining; index++){
-			out[index] = out[index] + soundAmplitude * soundData.data[index];
+	delete this->newSoundBuffer;
+	delete this->playedSoundBuffer;
+}
+
+// ==== Protected / Private Functions ====
+
+void AudioEngine::copyNewSoundsToExisting(){
+	SoundMetaData sound;
+	while(
+		this->newSoundBuffer->hasMore()
+		&& this->playingSoundsLength < this->playingSoundsSize
+	){
+		// we can safely ignore the return value, we checked hasMore/1
+		this->newSoundBuffer->remove(sound);
+
+		this->playingSounds[ this->playingSoundsLength ] = sound;
+		this->playingSoundsLength++;
+	}
+
+	// hasSound = true; iff we couldn't add all the sounds
+	if( this->newSoundBuffer->hasMore() ){
+		//TODO Adding too many sounds
+	}
+}
+
+void AudioEngine::writeOutPreExisting(float* out, unsigned int framesPerBuffer){
+	
+	if( this->playingSoundsLength == 0 ) return;
+
+	// adjust the amplitude
+	float soundAmplitude = 1.0 / this->playingSoundsLength;
+
+	for(unsigned int i= 0; i < this->playingSoundsLength; i++){
+
+		SoundMetaData data = this->playingSounds[i];
+
+		unsigned long soundRemaining = data.sound->length - data.offset;
+
+		unsigned long outputCount =
+			framesPerBuffer < soundRemaining ?
+				framesPerBuffer : soundRemaining;
+
+		// Write the song out
+		float* rawSound = data.sound->audioData + data.offset;
+
+		data.offset = data.offset + outputCount;
+
+		for( unsigned long index = 0; index < outputCount; index++){
+			out[index] = out[index] + soundAmplitude * rawSound[index];
 		}
 
 		// song is done playing
 		if( outputCount == soundRemaining ){
-			playingSoundsLength--;
-			playingSounds.at(i) = playingSounds.at(playingSoundsLength);
+			this->playingSoundsLength--;
+			this->playingSounds[i] = this->playingSounds[this->playingSoundsLength];
 			i--;
 
-			if( !playedSoundBuffer.add(currentSound) ){
+			if( data.needsNotify && ! this->playedSoundBuffer->add(data.sound) ){
 				// TODO what do we do?
 			}
+		}else{
+			this->playingSounds[i] = data;
 		}
 
-	}
+	}// end engine update sound
 }
 
-void AudioEngine::copyNewSoundsToExisting(){
-	Sound* sound = NULL;
-	while(
-		newSoundBuffer.remove(sound)
-		&& playingSoundsLength < playingSounds.max_size()
-	){
-		playingSounds.at( playingSoundsLength ) = std::tuple<Sound*,unsigned long>(sound, 0);
-		playingSoundsLength++;
+
+int AudioEngine::fetchSoundData(
+ 	void *outputBuffer
+    , unsigned long framesPerBuffer
+){
+	// TODO we currently only support one format
+	float* out = (float*)outputBuffer;
+
+	// clear the buffer, because there could be junk in it.
+	// and because writeOutPreExisting/2 doesn't overwrite
+	// the buffer, but adds to it's contents
+	for(unsigned long i = 0; i < framesPerBuffer; i++){
+			out[i] = 0.0;
 	}
 
-	if( sound != NULL && playingSoundsLength == playingSounds.max_size() ){
-		//TODO Adding too many sounds
-	}
+	// do all the exsting sounds first, then deal with new sounds
+	this->writeOutPreExisting(out, framesPerBuffer);
 
+	// the new sounds we pick up will get played next time
+	this->copyNewSoundsToExisting();
+	
+	return 0;
 }
 
 }

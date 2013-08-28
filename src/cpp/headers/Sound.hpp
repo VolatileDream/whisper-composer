@@ -1,22 +1,17 @@
-#ifndef _SOUND_HPP_
-#define _SOUND_HPP_
+#ifndef _WHISPER_SOUND_H_
+#define _WHISPER_SOUND_H_
 
-#include <memory>
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-#include "dyn_array.hpp"
+typedef struct {
+	float* audioData;
+	unsigned long length;
+} Sound;
 
-namespace Whisper {
-
-class Sound {
-public:
-
-	virtual const dyn_array<float>* getData() = 0;
-
-	virtual std::unique_ptr<dyn_array<float>> getData( size_t offset, size_t length ) = 0;
-
-	virtual size_t length() = 0;
-};
-
+#ifdef __cplusplus
 }
+#endif
 
 #endif
