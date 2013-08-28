@@ -14,14 +14,14 @@ C_AUDIO_ENGINE=$(OUTPUT)WC_AudioEngine.o
 all : $(C_AUDIO_ENGINE) lib main
 
 main: $(OUTPUT)libAudioEngine.a
-	gcc -g -std=c99 -pedantic -Wall $(INCLUDE) main.c $(OUTPUT)libAudioEngine.a \
+	$(COMPILER) -g -std=c99 -pedantic -Wall $(INCLUDE) main.c $(OUTPUT)libAudioEngine.a \
 	$(LIBS) -o main
 
 .PHONY: lib
 lib: $(OUTPUT)libAudioEngine.a
 
 $(OUTPUT)libAudioEngine.a: $(C_AUDIO_ENGINE) $(OUTPUT)AudioEngine.o
-	gcc -g -std=c99 -pedantic -Wall $(C_AUDIO_ENGINE) $(OUTPUT)AudioEngine.o \
+	$(COMPILER) -g -std=c99 -pedantic -Wall $(C_AUDIO_ENGINE) $(OUTPUT)AudioEngine.o \
 	$(LIBS) -shared -o $(OUTPUT)libAudioEngine.a
 
 $(C_AUDIO_ENGINE): $(OUTPUT)AudioEngine.o WC_AudioEngine.c
