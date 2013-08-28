@@ -1,1 +1,1 @@
-cp ../libWhisper.so .
+cp ../../lib/libAudioEngine.a .

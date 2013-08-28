@@ -21,6 +21,16 @@ def LibFunction(getLibCallFunc, restype, argtypes):
 
 	return builder;
 
+# throw exceptions on null
+def ErrorOnNull(func):
+
+	def decorator(self, *params, **kvargs):
+		if not self.value:
+			raise Exception("Null Pointer")
+		return func(self, *params, **kvargs)
+
+	return decorator
+
 
 # Now the public stuff:
 
@@ -31,9 +41,11 @@ class AudioEngine(ctypes.c_void_p):
 	def _setLib(self, whisper):
 		self._whisper = whisper;
 
+	@ErrorOnNull
 	def AddSound(self, sound, flagFinished):
 		return self._whisper.AddSound(self, ctypes.pointer(sound), ctypes.c_bool(flagFinished) );
 
+	@ErrorOnNull
 	def GetFinishedSound(self):
 		return self._whisper.GetFinishedSound(self);
 
@@ -68,7 +80,7 @@ class Whisper(object):
 		
 	def _loadLib(self):
 		try:
-			self._lib = ctypes.CDLL("./Whisper.o");
+			self._lib = ctypes.CDLL("./libAudioEngine.a");
 			# setup the library
 			self._setupLib();
 		except Exception, e:
@@ -78,19 +90,29 @@ class Whisper(object):
 
 	def _setupLib(self):
 		lib = self._lib;
-		lib.WC_Allocate.restype = AudioEngine;
-		lib.WC_Allocate.argtypes = []; # no args
-
-		lib.WC_Init.restype = ctypes.c_bool;
-		lib.WC_Init.argtypes = [AudioEngine, ctypes.c_void_p];
+		lib.WC_Create.restype = AudioEngine;
+		# takes: concurrent play count, queued sound count, finished sound count
+		lib.WC_Create.argtypes = [ctypes.c_ulong, ctypes.c_ulong, ctypes.c_ulong];
 
 		lib.WC_Dispose.restype = None;
 		lib.WC_Dispose.argtypes = [ AudioEngine ];
 
-	def CreateEngine(self, settings):
-		engine = self._lib.WC_Allocate();
+	def CreateEngine(self, settings=None):
+		if not settings:
+			settings = {}
 
-		if engine and self._lib.WC_Init(engine, ctypes.c_void_p(settings)) :
+		# powers of 2 minus 1, since we use ring buffers internally
+		concurrentPlayCount = settings.get('concurrentPlayCount', 63)
+		queuedSoundCount = settings.get('queuedSoundCount', 63)
+		finishedSoundCount = settings.get('finishedSoundCount', 63)
+
+		engine = self._lib.WC_Create(
+			ctypes.c_ulong(concurrentPlayCount)
+			,ctypes.c_ulong(queuedSoundCount)
+			,ctypes.c_ulong(finishedSoundCount)
+		);
+
+		if engine :
 			self._engines[engine.value] = engine;
 			engine._setLib(self);
 			return engine;
