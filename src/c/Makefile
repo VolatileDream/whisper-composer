@@ -11,7 +11,7 @@ OUTPUT= ../../lib/
 C_AUDIO_ENGINE=$(OUTPUT)WC_AudioEngine.o
 
 .PHONY: all
-all : $(C_AUDIO_ENGINE) $(OUTPUT)libAudioEngine.a main
+all : $(C_AUDIO_ENGINE) lib main
 
 main: $(OUTPUT)libAudioEngine.a
 	gcc -g -std=c99 -pedantic -Wall $(INCLUDE) main.c $(OUTPUT)libAudioEngine.a \
