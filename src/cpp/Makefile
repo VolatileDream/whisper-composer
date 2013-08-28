@@ -9,10 +9,10 @@ TIMING= time
 OUTPUT= ../../lib/
 
 .PHONY: all
-all : $(OUTPUT)AudioEngine.o test $(OUTPUT)main
+all : $(OUTPUT)AudioEngine.o test $(OUTPUT)main-cpp
 
-$(OUTPUT)main : $(OUTPUT)AudioEngine.o main.cpp
-	$(COMPILER) $(FLAGS) $(INCLUDE) $(OUTPUT)AudioEngine.o main.cpp $(LIBS) -o $(OUTPUT)main
+$(OUTPUT)main-cpp : $(OUTPUT)AudioEngine.o main.cpp
+	$(COMPILER) $(FLAGS) $(INCLUDE) $(OUTPUT)AudioEngine.o main.cpp $(LIBS) -o $(OUTPUT)main-cpp
 
 $(OUTPUT)AudioEngine.o : AudioEngine.cpp headers/*hpp private-headers/*hpp
 	$(COMPILER) $(FLAGS) $(INCLUDE) -c AudioEngine.cpp $(LIBS) -o $(OUTPUT)AudioEngine.o
@@ -29,4 +29,4 @@ $(OUTPUT)test.o: $(OUTPUT)AudioEngine.o tests/*.hpp tests/*.cpp
 
 .PHONY: clean
 clean:
-	rm $(OUTPUT)test.o $(OUTPUT)AudioEngine.o $(OUTPUT)main
+	rm $(OUTPUT)test.o $(OUTPUT)AudioEngine.o $(OUTPUT)main-cpp
