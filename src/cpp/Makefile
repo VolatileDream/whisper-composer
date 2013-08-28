@@ -1,6 +1,6 @@
 COMPILER= g++
 FLAGS= -std=c++11 -g -Wall -Wsign-compare -Wreturn-type -pedantic
-LIBS= -lm -lasound -ljack -lportaudio
+LIBS= -lm -lportaudio
 INCLUDE= -I headers -I private-headers
 
 TEST_INCLUDE= -I tests
