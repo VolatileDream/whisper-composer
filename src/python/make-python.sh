@@ -1,0 +1,1 @@
+cp ../../lib/libAudioEngine.a .

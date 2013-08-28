@@ -1,77 +1,68 @@
 #include <iostream>
-#include "portaudio.h"
 #include <cmath>
 
-#include "ConcurrentRingBuffer.hpp"
-#include "AudioEngine.hpp"
+#include "portaudio.h"
+
+#include "RingBuffer.hpp"
 #include "Sound.hpp"
-#include "ArraySound.hpp"
+
+#include "AudioEngine.hpp"
+#include "AudioEngineBuilder.hpp"
 
 using namespace Whisper;
 
-Sound* as();
-void crb();
-void ae();
+Sound* as(unsigned int length){
 
-int main(){
-	
-	crb();
+  const unsigned int size = 44100 * length;
+  const double PI = 3.14159265358979323846;
+  std::cout << "pi: " << PI << " size: " << size << std::endl;
 
-	ae();
+  Sound* sound = new Sound();
+  sound->length = size;
+  sound->audioData = new float[size];
+
+  for(unsigned int i=0; i < size; i++){
+    double pos =  i* 1.0/75.0 * 2.0*PI;
+    sound->audioData[i] = (float) sin(pos);
+  }
+
+  return sound;
 }
 
-Sound* as(){
-
-	float PI = 4*std::acos(1.0);
-
-	dyn_array<float>* contents = dyn_array<float>::create( 256 );
-
-	// do not play with this pointer...
-	float* data = contents->data;
-
-	for(size_t i=0; i < contents->size; i++){
-		data[i] = std::sin( i/PI ) * std::sin(4*i/PI);
-	}
-	data = NULL;
 
 
-	ArraySound* sound = new ArraySound( contents );	
-	return sound;
+Sound* getNextSound( AudioEngine* engine, unsigned long timeout ){
+  Sound* out = NULL;
+
+  while( timeout > 0 && (out=engine->getFinishedSound()) == NULL ){
+    Pa_Sleep(10);
+    timeout -= 10;
+  }
+
+  return out;
 }
 
 void ae(){
 
-	AudioEngine* engine = new AudioEngine( (void*) NULL );
+  unsigned int length = 4;
 
-	engine->addSound( as() );
+  Sound* soundOne = as(length);
 
-	Sound* doneSound = NULL;
-	while( doneSound == NULL ){
-		Pa_Sleep(500);
-		doneSound = engine->getFinishedSound();
-	}
-	delete doneSound;
+  AudioEngine* engine = AudioEngineBuilder().build();
+  
+  engine->addSound(soundOne, true );
+  
+  Pa_Sleep(length * 1000);
 
-	delete engine;
+  delete engine;
+  
+  delete [] soundOne->audioData ;
+  delete soundOne ;
 }
 
-void crb(){
-	const size_t size = 16;
-	
-	ConcurrentRingBuffer<unsigned long,size>* crb = new ConcurrentRingBuffer<unsigned long,size>();
+int main(){
+  
+  std::cout << "sizeof(float): " << sizeof(float) << std::endl;
 
-	unsigned long index = 0, tmp = 0;
-	while( crb->add(index) ){
-		index ++;
-	}
-
-	std::cout << "Max writes for size " << size << " was: " << index << std::endl;
-
-	index = 0;
-	while( crb->remove(tmp) ){
-		index++;
-	}
-
-	std::cout << "Max reads after full for size " << size << " was: " << index << std::endl;
-	delete crb;
+  ae();
 }
