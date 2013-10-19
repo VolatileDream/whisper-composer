@@ -13,16 +13,15 @@ C_AUDIO_ENGINE=$(OUTPUT)WC_AudioEngine.o
 .PHONY: all
 all : $(C_AUDIO_ENGINE) lib main
 
-main: $(OUTPUT)libAudioEngine.a
-	$(COMPILER) -g -std=c99 -pedantic -Wall $(INCLUDE) main.c $(OUTPUT)libAudioEngine.a \
-	$(LIBS) -o main
+$(OUTPUT)main-c: $(OUTPUT)libAudioEngine.a main.c
+	$(COMPILER) -g -std=c99 -pedantic -Wall $(INCLUDE) main.c -L . -lAudioEngine \
+	$(LIBS) -o $(OUTPUT)main-c
 
-.PHONY: lib
-lib: $(OUTPUT)libAudioEngine.a
 
 $(OUTPUT)libAudioEngine.a: $(C_AUDIO_ENGINE) $(OUTPUT)AudioEngine.o
 	$(COMPILER) -g -std=c99 -pedantic -Wall $(C_AUDIO_ENGINE) $(OUTPUT)AudioEngine.o \
 	$(LIBS) -shared -o $(OUTPUT)libAudioEngine.a
+	ln -s $(OUTPUT)libAudioEngine.a libAudioEngine.a
 
 $(C_AUDIO_ENGINE): $(OUTPUT)AudioEngine.o WC_AudioEngine.c
 	$(COMPILER) $(FLAGS) $(INCLUDE) \
@@ -35,3 +34,11 @@ $(OUTPUT)AudioEngine.o:
 .PHONY: clean
 clean:
 	rm $(OUTPUT)libAudioEngine.a main $(C_AUDIO_ENGINE)
+
+# Proxy Rules
+
+.PHONY: main
+main: $(OUTPUT)main-c
+
+.PHONY: lib
+lib: $(OUTPUT)libAudioEngine.a

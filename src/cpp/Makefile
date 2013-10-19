@@ -18,14 +18,14 @@ $(OUTPUT)AudioEngine.o : AudioEngine.cpp headers/*hpp private-headers/*hpp
 	$(COMPILER) $(FLAGS) $(INCLUDE) -c AudioEngine.cpp $(LIBS) -o $(OUTPUT)AudioEngine.o
 
 .PHONY: test
-test: $(OUTPUT)test.o
+test: $(OUTPUT)test-cpp
 	# Must pass:
-	$(TIMING) $(OUTPUT)test.o
+	$(TIMING) $(OUTPUT)test-cpp
 	# Can't produce memory warnings:
-	valgrind --leak-check=full --error-exitcode=2 $(OUTPUT)test.o --ignore-failed
+	valgrind --leak-check=full --error-exitcode=2 $(OUTPUT)test-cpp --ignore-failed
 
-$(OUTPUT)test.o: $(OUTPUT)AudioEngine.o tests/*.hpp tests/*.cpp
-	$(COMPILER) $(FLAGS) $(INCLUDE) $(TEST_INCLUDE) $(OUTPUT)AudioEngine.o tests/*.cpp -o $(OUTPUT)test.o $(LIBS)
+$(OUTPUT)test-cpp: $(OUTPUT)AudioEngine.o tests/*.hpp tests/*.cpp
+	$(COMPILER) $(FLAGS) $(INCLUDE) $(TEST_INCLUDE) $(OUTPUT)AudioEngine.o tests/*.cpp -o $(OUTPUT)test-cpp $(LIBS)
 
 .PHONY: clean
 clean:

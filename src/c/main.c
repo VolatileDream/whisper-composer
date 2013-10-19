@@ -21,7 +21,7 @@ Sound* as(){
 	sound->audioData = (float*) malloc(size * sizeof(float));
 
 	for(unsigned int i=0; i < size; i++){
-		double pos =  i* 1.0/400.0 * 2.0*PI;
+		double pos =  i* 1.0/75.0 * 2.0*PI;
 	    sound->audioData[i] = (float) sin(pos);
 	}
 
