@@ -33,7 +33,7 @@ $(OUTPUT)AudioEngine.o:
 
 .PHONY: clean
 clean:
-	rm $(OUTPUT)libAudioEngine.a main $(C_AUDIO_ENGINE)
+	rm $(OUTPUT)libAudioEngine.a $(C_AUDIO_ENGINE) $(OUTPUT)main-c libAudioEngine.a
 
 # Proxy Rules
 
