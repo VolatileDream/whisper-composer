@@ -17,3 +17,5 @@ python : c
 .PHONY: clean
 clean :
 	rm lib/*
+	cd src/c ; make clean
+	cd src/cpp ; make clean

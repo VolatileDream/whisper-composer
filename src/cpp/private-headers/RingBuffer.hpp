@@ -93,9 +93,9 @@ private:
 		return (i + 1) % size;
 	}
 	// indices of the start + end of our buffer.
-	unsigned int start = 0;
-	unsigned int end = 0;
-	unsigned int size;
+	volatile unsigned int start = 0;
+	volatile unsigned int end = 0;
+	const unsigned int size;
 	T* buffer;
 };
 
